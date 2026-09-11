@@ -1,12 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import sqlite3
+conn = sqlite3.connect("hotingo.db")
+cursor = conn.cursor()
+
+cursor.execute("CREATE TABLE IF NOT EXISTS reservations (id INTEGER PRIMARY KEY, guest TEXT , room INTEGER)")
 
 window = tk.Tk()
 window.title("App")
 
 windoww = 800
-windowh = 300
+windowh = 500
 
 screenw = window.winfo_screenwidth()
 screenh = window.winfo_screenheight()
@@ -80,8 +85,10 @@ tree.heading("guest", text="Guest ID")
 tree.heading("room", text="Room ID")
 tree.pack()
 
-tree.insert("", "end", values=(1, 12, 345))
-tree.insert("", "end", values=(2, 8, 210))
+cursor.execute("SELECT * FROM reservations")
+rows = cursor.fetchall()
+for row in rows:
+    tree.insert("", "end", values=row)
 
 def get_selected():
     selected_item = tree.focus()          
@@ -93,8 +100,13 @@ def add_reservation():
     guest_entry.delete(0, tk.END)
     room=room_entry.get()
     room_entry.delete(0, tk.END)
-    tree.insert("", "end", values=(len(tree.get_children()) + 1, guest, room))
     
+    cursor.execute("INSERT INTO reservations (guest,Room) VALUES (? , ?)" , (guest,room))
+    conn.commit()
+    
+    new_id = cursor.lastrowid
+    tree.insert("", "end", values=(new_id,guest, room))
+        
 
 reserve = tk.Button(reservations_frame,text="Reserve",command=add_reservation)
 reserve.pack(fill="x")
@@ -183,8 +195,6 @@ about_btn.pack(fill="x")
 logout_btn = tk.Button(sidebar, text="Logout", command=logout)
 logout_btn.pack(fill="x")
 
-
-
-
-
 window.mainloop()
+
+conn.close()
